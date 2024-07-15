@@ -229,8 +229,8 @@ class Streamlit:
                 st.write(response)
                 st.code(f"Time taken: {runtime}")
 
-
-Streamlit.streamlit()
+if __name__ == "__main__":
+    Streamlit.streamlit()
 
 # manager = AssistantManager()
 # message = input("Ask me anything: ")
