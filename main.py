@@ -229,6 +229,7 @@ class Streamlit:
                 st.write(response)
                 st.code(f"Time taken: {runtime}")
 
+
 if __name__ == "__main__":
     Streamlit.streamlit()
 
