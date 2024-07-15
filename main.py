@@ -56,7 +56,8 @@ dotenv_path = find_dotenv()
 load_dotenv(dotenv_path)
 
 client = OpenAI()
-client.api_key = os.environ.get("OPENAI_API_KEY")
+# client.api_key = os.environ.get("OPENAI_API_KEY")
+client.api_key = st.secrets["OPENAI_API_KEY"]
 
 model = "gpt-3.5-turbo"
 name = "Personal Trainer"
