@@ -1,7 +1,7 @@
 from openai import OpenAI
 from dotenv import find_dotenv, load_dotenv
 from time import strftime, gmtime, sleep
-from json import load, dump
+# from json import load, dump
 import streamlit as st
 import os
 import logging
@@ -23,29 +23,29 @@ class Caching:
         except FileExistsError:
             pass
 
-    @staticmethod
-    def load_from_cache(filepath):
-        try:
-            with open(filepath, "r") as cache:
-                data = load(cache)
-            return data
-        except (FileNotFoundError, ValueError):
-            return None
+    # @staticmethod
+    # def load_from_cache(filepath):
+    #     try:
+    #         with open(filepath, "r") as cache:
+    #             data = load(cache)
+    #         return data
+    #     except (FileNotFoundError, ValueError):
+    #         return None
         
-    @staticmethod
-    def save_to_cache(filepath, assistant_id, thread_id):
-        Caching.create_file_if_not_exists(filepath)
+    # @staticmethod
+    # def save_to_cache(filepath, assistant_id, thread_id):
+    #     Caching.create_file_if_not_exists(filepath)
 
-        data = {
-            "assistant_id": assistant_id,
-            "thread_id": thread_id
-        }
+    #     data = {
+    #         "assistant_id": assistant_id,
+    #         "thread_id": thread_id
+    #     }
         
-        with open (filepath, "w") as cache:
-            dump(data, cache)
+    #     with open (filepath, "w") as cache:
+    #         dump(data, cache)
 
 
-cache_file_path = "./temp/cache.json"
+# cache_file_path = "./temp/cache.json"
 log_file_path = "./temp/log.log"
 
 Caching.create_file_if_not_exists(log_file_path)
@@ -56,22 +56,27 @@ dotenv_path = find_dotenv()
 load_dotenv(dotenv_path)
 
 client = OpenAI()
-client.api_key = os.environ.get("OPENAI_API_KEY")
-# client.api_key = st.secrets["OPENAI_API_KEY"]
+# client.api_key = os.environ.get("OPENAI_API_KEY")
+client.api_key = st.secrets["OPENAI_API_KEY"]
 
 model = "gpt-3.5-turbo"
 name = "Personal Trainer"
-instructions = """
-You are Jeff, the best personal trainer and nutritionist who knows how to get clients to build lean muscles.
-You've trained high-caliber athletes and movie stars.
-Your task is to answer any questions from the user about health, diet, workout, and lifestyle, and give them advice.
-Please address the user as Trung.
-"""
+try:
+    with open("instructions.txt", "r") as instruct:
+        instructions = instruct.read()
+    logging.info("'instructions.txt' loaded successfully")
+except FileNotFoundError:
+    logging.error("'instructions.txt' not found. 'instructions' defaults to 'You are a helpful assistant'")
+    instructions = "You are a helpful assistant."
 
 
 class AssistantManager:
-    assistant_id = None
-    thread_id = None
+    # assistant_id = None
+    # thread_id = None
+    if "assistant_id" not in st.session_state:
+        st.session_state["assistant_id"] = None
+    if "thread_id" not in st.session_state:
+        st.session_state["thread_id"] = None
 
     def __init__(self):
         self.client = client
@@ -81,26 +86,29 @@ class AssistantManager:
         self.response = None
         self.runtime = None
 
-        data = Caching.load_from_cache(cache_file_path)
+        # data = Caching.load_from_cache(cache_file_path)
 
-        try:
-            AssistantManager.assistant_id = data["assistant_id"]
-        except (TypeError, KeyError):
-            pass
+        # try:
+        #     AssistantManager.assistant_id = data["assistant_id"]
+        # except (TypeError, KeyError):
+        #     pass
 
-        try:
-            AssistantManager.thread_id = data["thread_id"]
-        except (TypeError, KeyError):
-            pass
+        # try:
+        #     AssistantManager.thread_id = data["thread_id"]
+        # except (TypeError, KeyError):
+        #     pass
 
-        if AssistantManager.assistant_id:
+        # if AssistantManager.assistant_id:
+        if st.session_state["assistant_id"]:
             try:
                 logging.info("Assistant ID exists. Retrieving Assistant...")
                 self.assistant = self.client.beta.assistants.retrieve(
-                    assistant_id=AssistantManager.assistant_id
+                    # assistant_id=AssistantManager.assistant_id
+                    assistant_id=st.session_state["assistant_id"]
                 )
                 logging.info("Assistant retrieved successfully")
-                logging.info(f"Current Assistant ID is: {AssistantManager.assistant_id}")
+                # logging.info(f"Current Assistant ID is: {AssistantManager.assistant_id}")
+                logging.info(f"Current Assistant ID is: {st.session_state["assistant_id"]}")
             except Exception as e:
                 logging.error(f"Fail to retrieve Assistant: {e}")
                 logging.info("No Assistant found. Creating new Assistant...")
@@ -109,14 +117,17 @@ class AssistantManager:
             logging.info("Assistant ID not found. Creating new Assistant...")
             self.create_assistant()
 
-        if AssistantManager.thread_id:
+        # if AssistantManager.thread_id:
+        if st.session_state["thread_id"]:
             try:
                 logging.info("Thread ID exists. Retrieving Thread...")
                 self.thread = self.client.beta.threads.retrieve(
-                    thread_id=AssistantManager.thread_id
+                    # thread_id=AssistantManager.thread_id
+                    thread_id=st.session_state["thread_id"]
                 )
                 logging.info("Thread retrieved successfully")
-                logging.info(f"Current Thread ID is: {AssistantManager.thread_id}")
+                # logging.info(f"Current Thread ID is: {AssistantManager.thread_id}")
+                logging.info(f"Current Thread ID is: {st.session_state["thread_id"]}")
             except Exception as e:
                 logging.error(f"Fail to retrieve Thread: {e}")
                 logging.info("No Thread found. Creating new Thread...")
@@ -131,27 +142,34 @@ class AssistantManager:
             instructions=instructions,
             model=model
         )
-        AssistantManager.assistant_id = self.assistant.id
-        logging.info(f"New Assistant has been created, ID is: {AssistantManager.assistant_id}")
-        Caching.save_to_cache(cache_file_path, AssistantManager.assistant_id, AssistantManager.thread_id)
+        # AssistantManager.assistant_id = self.assistant.id
+        st.session_state["assistant_id"] = self.assistant.id
+        # logging.info(f"New Assistant has been created, ID is: {AssistantManager.assistant_id}")
+        logging.info(f"New Assistant has been created, ID is: {st.session_state["assistant_id"]}")
+        # Caching.save_to_cache(cache_file_path, AssistantManager.assistant_id, AssistantManager.thread_id)
 
     def create_thread(self):
         self.thread = self.client.beta.threads.create()
-        AssistantManager.thread_id = self.thread.id
-        logging.info(f"New Thread has been created, ID is: {AssistantManager.thread_id}")
-        Caching.save_to_cache(cache_file_path, AssistantManager.assistant_id, AssistantManager.thread_id)
+        # AssistantManager.thread_id = self.thread.id
+        st.session_state["thread_id"] = self.thread.id
+        # logging.info(f"New Thread has been created, ID is: {AssistantManager.thread_id}")
+        logging.info(f"New Thread has been created, ID is: {st.session_state["thread_id"]}")
+        # Caching.save_to_cache(cache_file_path, AssistantManager.assistant_id, AssistantManager.thread_id)
 
     def ask_assistant(self, prompt):
         self.client.beta.threads.messages.create(
-            thread_id=AssistantManager.thread_id,
+            # thread_id=AssistantManager.thread_id,
+            thread_id=st.session_state["thread_id"],
             role="user",
             content=prompt
         )
 
     def run_assistant(self):
         self.run = self.client.beta.threads.runs.create(
-            assistant_id=AssistantManager.assistant_id,
-            thread_id=AssistantManager.thread_id,
+            # assistant_id=AssistantManager.assistant_id,
+            assistant_id=st.session_state["assistant_id"],
+            # thread_id=AssistantManager.thread_id,
+            thread_id=st.session_state["thread_id"],
             instructions=instructions
         )
         self.run_id = self.run.id
@@ -163,7 +181,8 @@ class AssistantManager:
         while True:
             try:
                 self.run = self.client.beta.threads.runs.retrieve(
-                    thread_id=AssistantManager.thread_id,
+                    # thread_id=AssistantManager.thread_id,
+                    thread_id=st.session_state["thread_id"],
                     run_id=self.run_id,
                     timeout=timeout
                 )
@@ -182,7 +201,8 @@ class AssistantManager:
 
     def retrieve_response(self):
         messages = self.client.beta.threads.messages.list(
-            thread_id=AssistantManager.thread_id,
+            # thread_id=AssistantManager.thread_id,
+            thread_id=st.session_state["thread_id"],
             run_id=self.run_id
         )
 
