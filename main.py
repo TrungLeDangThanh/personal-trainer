@@ -56,8 +56,8 @@ dotenv_path = find_dotenv()
 load_dotenv(dotenv_path)
 
 client = OpenAI()
-# client.api_key = os.environ.get("OPENAI_API_KEY")
-client.api_key = st.secrets["OPENAI_API_KEY"]
+client.api_key = os.environ.get("OPENAI_API_KEY")
+# client.api_key = st.secrets["OPENAI_API_KEY"]
 
 model = "gpt-3.5-turbo"
 name = "Personal Trainer"
@@ -141,11 +141,11 @@ class AssistantManager:
         logging.info(f"New Thread has been created, ID is: {AssistantManager.thread_id}")
         Caching.save_to_cache(cache_file_path, AssistantManager.assistant_id, AssistantManager.thread_id)
 
-    def ask_assistant(self, message):
+    def ask_assistant(self, prompt):
         self.client.beta.threads.messages.create(
             thread_id=AssistantManager.thread_id,
             role="user",
-            content=message
+            content=prompt
         )
 
     def run_assistant(self):
@@ -210,24 +210,45 @@ class AssistantManager:
 class Streamlit:
     @staticmethod
     def streamlit():
-        st.title("Personal Trainer")
+        st.title("💪 Personal Trainer")
+        st.write("Embark on your journey to fitness.")
 
-        with st.form("my_form"):
-            message = st.text_input("Ask me anything")
-            submit = st.form_submit_button("Send")
+        if "messages" not in st.session_state:
+            st.session_state["messages"] = []
 
-            if submit:
-                manager = AssistantManager()
-                
-                manager.ask_assistant(message)
-                manager.run_assistant()
-                manager.wait_assistant()
+        for message in st.session_state["messages"]:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
 
-                response = manager.return_response()
-                runtime = manager.return_runtime()
+        if prompt := st.chat_input("Ask me anything"):
+            with st.chat_message("user"):
+                st.markdown(prompt)
 
-                st.write(response)
+            manager = AssistantManager()
+            
+            manager.ask_assistant(prompt)
+            manager.run_assistant()
+            manager.wait_assistant()
+
+            response = manager.return_response()
+            runtime = manager.return_runtime()
+
+            with st.chat_message("assistant"):
+                st.markdown(response)
                 st.code(f"Time taken: {runtime}")
+
+            st.session_state["messages"].extend(
+                [
+                    {
+                        "role": "user",
+                        "content": prompt
+                    },
+                    {
+                        "role": "assistant",
+                        "content": response
+                    }
+                ]
+            )
 
 
 if __name__ == "__main__":
