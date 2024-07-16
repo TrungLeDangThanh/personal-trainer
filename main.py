@@ -108,7 +108,7 @@ class AssistantManager:
                 )
                 logging.info("Assistant retrieved successfully")
                 # logging.info(f"Current Assistant ID is: {AssistantManager.assistant_id}")
-                logging.info(f"Current Assistant ID is: {st.session_state["assistant_id"]}")
+                logging.info(f"Current Assistant ID is: {st.session_state.assistant_id}")
             except Exception as e:
                 logging.error(f"Fail to retrieve Assistant: {e}")
                 logging.info("No Assistant found. Creating new Assistant...")
@@ -127,7 +127,7 @@ class AssistantManager:
                 )
                 logging.info("Thread retrieved successfully")
                 # logging.info(f"Current Thread ID is: {AssistantManager.thread_id}")
-                logging.info(f"Current Thread ID is: {st.session_state["thread_id"]}")
+                logging.info(f"Current Thread ID is: {st.session_state.thread_id}")
             except Exception as e:
                 logging.error(f"Fail to retrieve Thread: {e}")
                 logging.info("No Thread found. Creating new Thread...")
@@ -145,7 +145,7 @@ class AssistantManager:
         # AssistantManager.assistant_id = self.assistant.id
         st.session_state["assistant_id"] = self.assistant.id
         # logging.info(f"New Assistant has been created, ID is: {AssistantManager.assistant_id}")
-        logging.info(f"New Assistant has been created, ID is: {st.session_state["assistant_id"]}")
+        logging.info(f"New Assistant has been created, ID is: {st.session_state.assistant_id}")
         # Caching.save_to_cache(cache_file_path, AssistantManager.assistant_id, AssistantManager.thread_id)
 
     def create_thread(self):
@@ -153,7 +153,7 @@ class AssistantManager:
         # AssistantManager.thread_id = self.thread.id
         st.session_state["thread_id"] = self.thread.id
         # logging.info(f"New Thread has been created, ID is: {AssistantManager.thread_id}")
-        logging.info(f"New Thread has been created, ID is: {st.session_state["thread_id"]}")
+        logging.info(f"New Thread has been created, ID is: {st.session_state.thread_id}")
         # Caching.save_to_cache(cache_file_path, AssistantManager.assistant_id, AssistantManager.thread_id)
 
     def ask_assistant(self, prompt):
